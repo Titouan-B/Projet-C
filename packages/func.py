@@ -12,7 +12,7 @@ Created on Fri Nov 25 22:12:03 2022
 
 import matplotlib.pyplot as plt
 import pandas as pd
-import seaborn as sns
+from seaborn import kdeplot, set
 import numpy as np
 import fitz
 from os import chdir, getcwd
@@ -210,7 +210,7 @@ def GraphPositionVin(df2, vin):
 # Graph du vin par rapport aux autres
     plt.clf() #Clear previous graphs in memory
     custom_params = {"axes.spines.right": False, "axes.spines.top": False}
-    sns.set(style="ticks", rc=custom_params)
+    set(style="ticks", rc=custom_params)
     # Mise en forme des données
     rdf1 = df2['q1'].reset_index()
     rdf2 = df2['q2'].reset_index()
@@ -225,8 +225,8 @@ def GraphPositionVin(df2, vin):
     plt.axvline(float(meanq2), 0,0.95, color = 'black', ls = '--')
     
     # Faire les deux plots + titre et enlever l'axe y
-    fig2 = sns.kdeplot(rdf1['q1'], shade=True, bw_method=0.5, color="gold")
-    fig2 = sns.kdeplot(rdf2['q2'], shade=True, bw_method=0.5, color="black")
+    fig2 = kdeplot(rdf1['q1'], shade=True, bw_method=0.5, color="gold")
+    fig2 = kdeplot(rdf2['q2'], shade=True, bw_method=0.5, color="black")
     fig2.figure.suptitle('Votre vin par rapport aux autres !', fontfamily = "Arial Rounded MT Bold")
     fig2.get_yaxis().set_visible(False)
     plt.savefig('p.png', format='png', transparent=True, dpi=100)
