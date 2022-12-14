@@ -167,7 +167,7 @@ class MainWindow(QMainWindow):
             self.label.setText(filename[0:20] + '...')
             self.label.resize(200, 20)
             if self.b1.isChecked():
-                self.b1.setStyleSheet("QRadioButton { color : green; }")
+                self.b1.setStyleSheet("QRadioButton { color : pink; }")
                 nb_doc+=1
                 self.labelradio.setText(str(nb_doc) + "/2 documents chargés")
                 self.b2.setChecked(True)
