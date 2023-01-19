@@ -268,7 +268,7 @@ def RadarplotVin(pnnmoy, vin):
         
         # Echelle du radarplot
         markers = [0, 1, 2, 3, 4, 5, 6]
-        
+        #Bojour
         # Catégories présentes sur le graphique (exemple ici)
         categories = ["Finesse des bulles", "Tenue cordon", "Robe"]
         categories = [*categories, categories[0]]
