@@ -7,10 +7,10 @@ Created on Wed Dec  7 15:13:05 2022
 
 # Import des modules
 import sys
-from PyQt6.QtWidgets import *
-from PyQt6.QtCore import *
-from PyQt6.QtCore import *
-from PyQt6.QtCore import pyqtSignal as Signal, pyqtSlot as Slot
+from PyQt5.QtWidgets import *
+from PyQt5.QtCore import *
+from PyQt5.QtCore import *
+from PyQt5.QtCore import pyqtSignal as Signal, pyqtSlot as Slot
 from packages import func #func est un module à part contenant les fonctions de 
 # stats et pour importer les données
 
