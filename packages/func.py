@@ -32,7 +32,7 @@ except ModuleNotFoundError:
 
 # Traitement/Mise en forme
 
-def ImportData(filename):
+def ImportDataConso(filename):
     '''
     Fonction important et traitant les données
 
@@ -50,15 +50,15 @@ def ImportData(filename):
     df = pd.read_excel(filename)
     df2 = df.groupby(["numvin"]).mean()
 
-# df3 -> colonnes avec conditions de consommation
+# df3/dp3 -> colonnes avec conditions de consommation
     df3 = df.loc[:, 'q13_1':'q13_5'].copy()
     df3transformed = df['numvin'].copy()
 
-# df4 -> colonnes avec tranches de prix
+# df4/dp4 -> colonnes avec tranches de prix
     df4 = df['q14'].copy()
     df4transformed = df['numvin'].copy()
 
-# On sépare les colonnes avec positivement/négativement/pas d'influence
+# On sépare les colonnes avec positivement/négativement/pas d'influence pas besoin chez les pros
     pnn = df.loc[:, 'q3':'q11'].copy()
 
     pnntransformed = df['numvin'].copy()
@@ -77,18 +77,16 @@ def ImportData(filename):
     loop = df4.squeeze()
     loop = loop.map({'10 à 15 €': int(1), '15 à 20 €': int(0), '20 à 25 €':int(-1), '25 € ou plus':int(2) })
     df4transformed = pd.concat([df4transformed,loop], axis= 1)
+
 # On obtient pnn transformed : la dataframe comportant des
 # valeurs numériques (1/0/-1), on peut y appliquer des operations avec groupby
 
 # pnn moy : la moyenne de chaque vin sur ces colonnes
     pnnmoy = pnntransformed.groupby("numvin").mean().reset_index()
 
-
-
 # df3 count : comptage des réponses pour chaque vin et chaque type de conso
     df3_count = df3transformed.groupby("numvin").count()
     df3_count = df3_count.reset_index()
-
 
 # df4 count : comptage des réponses pour chaque vin et chaque prix
     # df4data = df4transformed.loc[df4transformed["numvin"] == vin]
@@ -96,12 +94,67 @@ def ImportData(filename):
 # toutes les données pour chaque question pour un vin
     # winedata = pnntransformed.loc[pnntransformed["numvin"] == vin]
 
-    return df, df2, pnnmoy, df3_count, df4transformed, pnntransformed
+    return df, df2, pnnmoy, df3_count,df4transformed, pnntransformed,
 # Ajouter return df4 et tout, verifier que tout colle dans start au niveau
 # des retours, ajouter conso %
 
 # =============================================================================
 
+def ImportDataPro(filename):
+    '''
+    Fonction important et traitant les données
+
+    Parameters
+    ----------
+    filename : str
+        Filename of the excel file
+
+    Returns
+    -------
+    None.
+
+    '''
+
+
+    dp=pd.read_excel(filename)
+    dp2= df.groupby(["numvin"]).mean()
+
+    dp3 = dp.loc[:, 'q15_1':'q15_5'].copy()
+    dp3transformed = dp['numvin'].copy()
+
+    dp4 = dp['q16'].copy()
+    dp4transformed = dp['numvin'].copy()
+
+    # Pour les pros on fait la moyenne des notes hédonniques pour chaque vin
+
+    notes_hedoniques=pd.DataFrame(dp2.iloc[:, 1:14])
+    moy_hedo_pro=pd.DataFrame(notes_hedoniques.groupby(["numvin"]).mean())
+
+
+    for i in range(len(dp3.keys())):
+        loop = dp3[[dp3.keys()[i]]].squeeze()
+        loop = loop.map({'A boire en cours de repas': int(1), "Pour un simple moment festif": int(1), 'Parfait pour l’apéritif':int(1), 'Parfait pour le dessert':int(1),'Pour célébrer les grandes étapes de la vie':int(1) })
+        dp3transformed = pd.concat([dp3transformed,loop], axis= 1)
+    
+    
+    loop = dp4.squeeze()
+    loop = loop.map({'10 à 15 €': int(1), '15 à 20 €': int(0), '20 à 25 €':int(-1), '25 € ou plus':int(2) })
+    dp4transformed = pd.concat([dp4transformed,loop], axis= 1)
+
+    dp3_count = dp3transformed.groupby("numvin").count()
+    dp3_count = dp3_count.reset_index()
+
+    return dp, dp2, dp3_count, dp4transformed
+
+def ProPourcentage(dp3_count, vin, text_output):
+    
+    countvin = dp3_count.loc[dp3_count["numvin"]== vin]
+    total = int(countvin['q15_1'] + countvin['q15_2']+ countvin['q15_3'] + countvin['q15_4'] + countvin['q15_5'])
+    
+    for col in enumerate(countvin.keys()[1:6].tolist()):
+        text_output.append("Situation "+str(col[0]+1)+" : " + str(float(countvin[col[1]]/total)))
+    return text_output
+    
 def ConsoPourcentage(df3_count, vin, text_output):
     
     countvin = df3_count.loc[df3_count["numvin"]== vin]
@@ -111,7 +164,6 @@ def ConsoPourcentage(df3_count, vin, text_output):
         text_output.append("Situation "+str(col[0]+1)+" : " + str(float(countvin[col[1]]/total)))
     return text_output
 # =============================================================================
-
 
 def TranchePrix(df4transformed,vin,text_output):
     df4data = df4transformed.loc[df4transformed["numvin"] == vin]
@@ -130,6 +182,23 @@ def TranchePrix(df4transformed,vin,text_output):
     return(text_output)
 # =============================================================================
 
+def TranchePrixPro(dp4transformed,vin,text_output):
+    dp4data = dp4transformed.loc[dp4transformed["numvin"] == vin]
+
+    dixquinze = dp4data['q16'].loc[dp4data['q16'] == 1].count()
+    quinzevingt = dp4data['q16'].loc[dp4data['q16'] == 0].count()
+    vingtvingcinq = dp4data['q16'].loc[dp4data['q16'] == -1].count()
+    vingcinqplus = dp4data['q16'].loc[dp4data['q16'] == 2].count()
+    
+    total = dixquinze + dixquinze + vingtvingcinq + vingcinqplus
+
+    text_output += ['10-15€ : '+ str(dixquinze/total)]
+    text_output += ['15-20€ : '+ str(quinzevingt/total)]
+    text_output += ['20-25€ : '+ str(vingtvingcinq/total)]
+    text_output += ['+25€ : '+ str(vingcinqplus/total)]
+    return(text_output)
+
+# =============================================================================
 
 # Nuage de mots 
 
