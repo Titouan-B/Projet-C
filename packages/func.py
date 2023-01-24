@@ -294,12 +294,13 @@ def RadarplotVin(pnnmoy, vin):
     ax.axis('off')
     
     # Lignes + points du vin actuel
-    plt.plot(label_loc, data,'o-', label=str(vin), color='gold',linewidth=4.0)
-    plt.scatter(label_loc, data, color='gold',s=200)
-    
+    plt.plot(label_loc, data,'o-', label=str(vin), color='#cea450',linewidth=4.0, ms=30)
+    plt.scatter(label_loc, data, color='#dfbe62',s=200)
+
     # Points max/min
-    plt.scatter(label_loc, maxval, color='green',s=100)
-    plt.scatter(label_loc, minval, color='red',s=100)
+    plt.scatter(label_loc, maxval, color='#030303',s=300)
+    plt.scatter(label_loc, minval, color='#727272',s=300)
+
     
     #Plot + titre
     plt.yticks(markers)
