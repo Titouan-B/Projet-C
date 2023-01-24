@@ -115,7 +115,6 @@ def ImportDataPro(filename):
 
     '''
 
-
     dp=pd.read_excel(filename)
     dp2= df.groupby(["numvin"]).mean()
 
@@ -154,7 +153,7 @@ def ProPourcentage(dp3_count, vin, text_output):
     for col in enumerate(countvin.keys()[1:6].tolist()):
         text_output.append("Situation "+str(col[0]+1)+" : " + str(float(countvin[col[1]]/total)))
     return text_output
-    
+
 def ConsoPourcentage(df3_count, vin, text_output):
     
     countvin = df3_count.loc[df3_count["numvin"]== vin]
