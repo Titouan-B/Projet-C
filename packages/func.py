@@ -116,7 +116,7 @@ def ImportDataPro(filename):
     '''
 
     dp=pd.read_excel(filename)
-    dp2= df.groupby(["numvin"]).mean()
+    dp2= dp.groupby(["numvin"]).mean()
 
     dp3 = dp.loc[:, 'q15_1':'q15_5'].copy()
     dp3transformed = dp['numvin'].copy()

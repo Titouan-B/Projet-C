@@ -238,13 +238,17 @@ class MainWindow(QMainWindow):
             global df2
             global pnntransformed
             global chiffreannee
+            global dp
+            global dp2
+            global dp3_count
+            global dp4transformed
+            global moy_hedo_pro
+            
             chiffreannee = 2022
             
             # Ouvre une fenetre pour selectionner le fichier : 
             filename, _filter = QFileDialog.getOpenFileName(self, 'OpenFile')
             
-            # Extrait toutes les données nécessaires : 
-            df, df2, pnnmoy, df3_count, df4transformed, pnntransformed = func.ImportData(filename)
             
             self.label.setText(filename[0:20] + '...') #Affiche le lien du excel
             self.label.resize(200, 20)
@@ -252,17 +256,23 @@ class MainWindow(QMainWindow):
             # Lorsqu'un doc est chargé, colore le bouton en vert et affiche le nb
             # de docs chargés à ce moments
             if self.b1.isChecked():
+                # Extrait toutes les données nécessaires conso !! : 
+                df, df2, pnnmoy, df3_count, df4transformed, pnntransformed = func.ImportDataConso(filename)
+                
                 self.b1.setStyleSheet("QRadioButton { color : green; }")
                 nb_doc+=1
                 self.labelradio.setText(str(nb_doc) + "/2 documents chargés")
                 self.b2.setChecked(True)
-
+                print(df)
             elif self.b2.isChecked():
+                # Extrait toutes les données nécessaires conso !! : 
+                dp, dp2, dp3_count, dp4transformed, moy_hedo_pro = func.ImportDataPro(filename)
+                
                 self.b2.setStyleSheet("QRadioButton { color : green; }")
                 nb_doc+=1
                 self.labelradio.setText(str(nb_doc) + "/2 documents chargés")
                 self.b1.setChecked(True)
-
+                print(dp)
             if nb_doc==1:
                 self.labelradio.setStyleSheet("QLabel { color : orange; }")
             if nb_doc==2:
