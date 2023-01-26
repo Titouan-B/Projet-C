@@ -143,7 +143,7 @@ def ImportDataPro(filename):
     dp3_count = dp3transformed.groupby("numvin").count()
     dp3_count = dp3_count.reset_index()
 
-    return dp, dp2, dp3_count, dp4transformed
+    return dp, dp2, dp3_count, dp4transformed, moy_hedo_pro
 
 def ProPourcentage(dp3_count, vin, text_output):
     
