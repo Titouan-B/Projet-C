@@ -137,7 +137,7 @@ def ImportDataPro(filename):
     
     
     loop = dp4.squeeze()
-    loop = loop.map({'10 à 15 €': int(1), '15 à 20 €': int(0), '20 à 25 €':int(-1), '25 € ou plus':int(2) })
+    loop = loop.map({'10 à 15€': int(1), '15 à 20€': int(0), '20 à 25€':int(-1), '25€ ou plus':int(2) })
     dp4transformed = pd.concat([dp4transformed,loop], axis= 1)
 
     dp3_count = dp3transformed.groupby("numvin").count()
