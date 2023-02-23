@@ -174,6 +174,7 @@ def TranchePrix(df4transformed,vin,text_output):
     text_output += ['20-25€ : '+ str(vingtvingcinq/total)]
     text_output += ['+25€ : '+ str(vingcinqplus/total)]
     return(text_output)
+
 # =============================================================================
 
 
@@ -252,18 +253,19 @@ def GraphDemiCercle(winedata):
 
 
 
-def GraphPositionVin(df2, vin):
+def GraphPositionVin(df2, moy_hedo_pro, vin):
 # Graph du vin par rapport aux autres
     plt.clf() #Clear previous graphs in memory
     custom_params = {"axes.spines.right": False, "axes.spines.top": False}
     set(style="ticks", rc=custom_params)
     # Mise en forme des données
-    rdf1 = df2['q1'].reset_index()
-    rdf2 = df2['q2'].reset_index()
+
+    rdfconso = df2['q2'].reset_index()
+    rdfpro = moy_hedo_pro['q1'].reset_index()
     
     # Faire le plot + ligne du vin
-    meanq1 = rdf1['q1'].loc[rdf1['numvin'] == vin]
-    meanq2 = rdf2['q2'].loc[rdf2['numvin'] == vin]
+    meanq1 = rdfpro['q1'].loc[rdfpro['numvin'] == vin]
+    meanq2 = rdfconso['q2'].loc[rdfconso['numvin'] == vin]
     
     # Lignes insiquant la position du vin
     plt.axvline(float(meanq1), 0,0.95, color = 'gold',ls = '--')
@@ -271,8 +273,8 @@ def GraphPositionVin(df2, vin):
     plt.axvline(float(meanq2), 0,0.95, color = 'black', ls = '--')
     
     # Faire les deux plots + titre et enlever l'axe y
-    fig2 = kdeplot(rdf1['q1'], shade=True, bw_method=0.5, color="gold")
-    fig2 = kdeplot(rdf2['q2'], shade=True, bw_method=0.5, color="black")
+    fig2 = kdeplot(rdfpro['q1'], shade=True, bw_method=0.5, color="gold")
+    fig2 = kdeplot(rdfconso['q2'], shade=True, bw_method=0.5, color="black")
     fig2.figure.suptitle('Votre vin par rapport aux autres !', fontfamily = "Arial Rounded MT Bold")
     fig2.get_yaxis().set_visible(False)
     plt.savefig('p.png', format='png', transparent=True, dpi=100)
@@ -299,18 +301,18 @@ def GraphPositionVin(df2, vin):
 
 ##Radarplot test
 
-def RadarplotVin(pnnmoy, vin):
+def RadarplotVin(moy_hedo_pro, vin):
 
     plt.clf() #Clear previous graphs in memory
 
 # Recherche des points max/min
-    questions = pnnmoy.keys()[1:4].values.tolist() #on prend les noms des colonnes
-
+    questions = moy_hedo_pro.keys()[1:4].values.tolist() #on prend les noms des colonnes
+    moy_hedo_pro = moy_hedo_pro.reset_index()
     maxval = []
     minval = []
     for i in range(len(questions)):
-        maxval.append(max(pnnmoy[questions[i]]))
-        minval.append(min(pnnmoy[questions[i]]))
+        maxval.append(max(moy_hedo_pro[questions[i]]))
+        minval.append(min(moy_hedo_pro[questions[i]]))
         
         # Echelle du radarplot
         markers = [0, 1, 2, 3, 4, 5, 6]
@@ -320,7 +322,7 @@ def RadarplotVin(pnnmoy, vin):
         categories = [*categories, categories[0]]
         
         # Données du graphique (colonnes 4,5,6 pour l'exemple)
-        data = pnnmoy.loc[pnnmoy["numvin"] == vin].values.tolist()[0][4:7]
+        data = moy_hedo_pro.loc[moy_hedo_pro["numvin"] == vin].values.tolist()[0][4:7]
         #les valeurs ici sont entre 0 et 1 donc je remap rapidement de 1 à 6
         data = list(map(lambda item: item * 6, data))
         data = [*data, data[0]]
@@ -337,7 +339,7 @@ def RadarplotVin(pnnmoy, vin):
     ax = plt.subplot(polar=True) #le polar fait que c'est un graph radial
     
     # Supprimer lex axes pour mettre devant un template sur le pdf ?
-    ax.axis('off')
+    # ax.axis('off')
     
     # Lignes + points du vin actuel
     plt.plot(label_loc, data,'o-', label=str(vin), color='#cea450',linewidth=4.0, ms=30)
@@ -349,7 +351,7 @@ def RadarplotVin(pnnmoy, vin):
 
     
     #Plot + titre
-    plt.yticks(markers)
+    # plt.yticks(markers)
     plt.title('Caractéristiques du vin '+ str(vin), size=20)
     lines, labels = plt.thetagrids(np.degrees(label_loc))#, labels=questions)
     plt.savefig('r.png', format='png', transparent=True, dpi=100)
@@ -358,6 +360,42 @@ def RadarplotVin(pnnmoy, vin):
 
 # =============================================================================
 
+def CalculScore(df2 ,dp2, pnnmoy, vin):
+    # Calcul score :
+    dp2 = dp2.reset_index()
+    dp2temp = dp2.loc[dp2["numvin"] == vin]
+
+    #SENSORIEL PRO 
+    oeil = 0.15*dp2temp['q2'] + 0.325 * dp2temp['q5'] + 0.15*dp2temp['q3'] + 0.325 *dp2temp['q4'] + 0.15*dp2temp['q6']
+    bouche = 0.2*dp2temp['q10'] + 0.4*dp2temp['q11'] + 0.4*dp2temp['q12']
+    nez = 0.2*dp2temp['q7'] + 0.4*dp2temp['q9'] + 0.4*dp2temp['q8']
+    ensemble = dp2temp['q13']
+
+    SENSO = (0.1 * oeil + 0.3* bouche +nez *0.3 + ensemble *0.3)/6
+
+    # ESTHETIQUE CONSO
+    pnntemp = pnnmoy.loc[pnnmoy["numvin"] == vin]
+
+    contenant = 0.6*pnntemp['q3'] + 0.4 *pnntemp['q4']
+    coiffecol = pnntemp['q5']
+    ensemblebout = pnntemp['q11']
+    etiqcontreetiq = 0.3*pnntemp['q7'] + 0.15*pnntemp['q6'] + 0.2*pnntemp['q8'] + 0.2*pnntemp['q9'] +0.15*pnntemp['q10']
+
+    ESTHETIQUE = 0.2 * contenant + 0.1*coiffecol + 0.4 * ensemblebout + 0.3 * etiqcontreetiq
+
+    # NOTE HEDO
+    df2temp = df2.reset_index()
+    df2temp = df2temp.loc[df2temp["numvin"] == vin]
+
+    HEDO = (1/3 * dp2temp['q1'] + 1/3 * df2temp['q1'] + 1/3 * df2temp['q2'])/10
+
+    # NOTE FINALE
+
+    SCORE = 1/3 * SENSO + 1/3 * ESTHETIQUE + 1/3 * HEDO
+    
+    return SCORE
+
+# =============================================================================
 # Modifier pdf dans Python
 
 

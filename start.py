@@ -36,7 +36,7 @@ class Worker(QObject):
             # Radar plot
             RPV = func.RadarplotVin(pnnmoy, vin[1])
             # Graphique avec les positions des vins
-            GraphPos = func.GraphPositionVin(df2, vin[1])
+            GraphPos = func.GraphPositionVin(df2, moy_hedo_pro, vin[1])
             # Graph en demi cercle
             GDC = func.GraphDemiCercle(winedata)
             # Tout le texte, donc pourcentage prix, tranches d'achats...
