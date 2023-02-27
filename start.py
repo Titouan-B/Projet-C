@@ -6,7 +6,7 @@ Created on Wed Dec  7 15:13:05 2022
 """
 
 # Import des modules
-import sys
+import sys, os
 from PyQt6.QtWidgets import *
 from PyQt6.QtCore import *
 from PyQt6.QtCore import *
@@ -27,6 +27,8 @@ class Worker(QObject):
     # Fonction principale
     def do_work(self, n):
         global filedir
+        os.chdir(filedir)
+        i=0
         # ListeVin = liste des numéros de vin
         ListeVin = pnnmoy['numvin'].tolist()
         # Pour chaque vin dans la liste, on crée les images/stats nécessaires 
@@ -36,16 +38,21 @@ class Worker(QObject):
             # Radar plot
             RPV = func.RadarplotVin(pnnmoy, vin[1])
             # Graphique avec les positions des vins
-            GraphPos = func.GraphPositionVin(df2, moy_hedo_pro, vin[1])
+            GPVS = func.GraphPositionVinScore(df2, moy_hedo_pro, vin[1])
+            GPVN = func.GraphPositionVinNote(df2, moy_hedo_pro, vin[1])
             # Graph en demi cercle
             GDC = func.GraphDemiCercle(winedata)
+            # Calcul Score
+            CS = func.CalculScore(df2 ,dp2, pnnmoy, vin[1],i)
+            i+=1
             # Tout le texte, donc pourcentage prix, tranches d'achats...
             text_output = []
             text_output = func.ConsoPourcentage(df3_count, vin[1], text_output)
-            text_output = func.TranchePrix(df4transformed,vin[1],text_output)
+            text_output += func.TranchePrix(df4transformed,vin[1],text_output)
             text_output += [str(chiffreannee)]
             # Fonction qui crée le pdf
-            func.CreaPDF(vin[1],text_output, filedir)
+            
+            func.CreaPDF(vin[1],filedir,text_output,df2,dp2)
             self.progress.emit(int(vin[0]+1))
         else :
             self.completed.emit(int(vin[0]+1))
@@ -239,34 +246,45 @@ class MainWindow(QMainWindow):
             global pnntransformed
             global chiffreannee
             chiffreannee = 2022
+            global dp
+            global dp2
+            global dp3_count
+            global dp4transformed
+            global moy_hedo_pro
             
             # Ouvre une fenetre pour selectionner le fichier : 
             filename, _filter = QFileDialog.getOpenFileName(self, 'OpenFile')
             
             # Extrait toutes les données nécessaires : 
-            df, df2, pnnmoy, df3_count, df4transformed, pnntransformed = func.ImportData(filename)
-            
+
             self.label.setText(filename[0:20] + '...') #Affiche le lien du excel
             self.label.resize(200, 20)
             
             # Lorsqu'un doc est chargé, colore le bouton en vert et affiche le nb
             # de docs chargés à ce moments
             if self.b1.isChecked():
+                # Extrait toutes les données nécessaires conso !! : 
+                df, df2, pnnmoy, df3_count, df4transformed, pnntransformed = func.ImportDataConso(filename)
+                
                 self.b1.setStyleSheet("QRadioButton { color : green; }")
                 nb_doc+=1
                 self.labelradio.setText(str(nb_doc) + "/2 documents chargés")
                 self.b2.setChecked(True)
-
+                print(df)
             elif self.b2.isChecked():
+                # Extrait toutes les données nécessaires conso !! : 
+                dp, dp2, dp3_count, dp4transformed, moy_hedo_pro = func.ImportDataPro(filename)
+                
                 self.b2.setStyleSheet("QRadioButton { color : green; }")
                 nb_doc+=1
                 self.labelradio.setText(str(nb_doc) + "/2 documents chargés")
                 self.b1.setChecked(True)
-
+                print(dp)
             if nb_doc==1:
                 self.labelradio.setStyleSheet("QLabel { color : orange; }")
             if nb_doc==2:
                 self.labelradio.setStyleSheet("QLabel { color : green; }")
+
 
         except:
             print('Mauvais input') #Si jamais le fichier importé n'est pas valide

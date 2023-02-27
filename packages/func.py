@@ -32,7 +32,7 @@ except ModuleNotFoundError:
 
 # Traitement/Mise en forme
 
-def ImportData(filename):
+def ImportDataConso(filename):
     '''
     Fonction important et traitant les données
 
@@ -142,7 +142,7 @@ def ImportDataPro(filename):
     dp3_count = dp3transformed.groupby("numvin").count()
     dp3_count = dp3_count.reset_index()
 
-    return dp, dp2, dp3_count, dp4transformed
+    return dp, dp2, dp3_count, dp4transformed, moy_hedo_pro
 
 
 # =============================================================================
@@ -154,8 +154,9 @@ def ConsoPourcentage(df3_count, vin, text_output):
     total = int(countvin['q13_1'] + countvin['q13_2']+ countvin['q13_3'] + countvin['q13_4'] + countvin['q13_5'])
     
     for col in enumerate(countvin.keys()[1:6].tolist()):
-        text_output.append("Situation "+str(col[0]+1)+" : " + str(float(countvin[col[1]]/total)))
-    return text_output
+        text_output.append(str(int((countvin[col[1]]/total)*100)) + "%")
+    return(text_output)
+
 # =============================================================================
 
 
@@ -169,10 +170,10 @@ def TranchePrix(df4transformed,vin,text_output):
     
     total = dixquinze + dixquinze + vingtvingcinq + vingcinqplus
 
-    text_output += ['10-15€ : '+ str(dixquinze/total)]
-    text_output += ['15-20€ : '+ str(quinzevingt/total)]
-    text_output += ['20-25€ : '+ str(vingtvingcinq/total)]
-    text_output += ['+25€ : '+ str(vingcinqplus/total)]
+    text_output.append(str(int(dixquinze/total*100)))
+    text_output.append(str(int(quinzevingt/total*100)))
+    text_output.append(str(int(vingtvingcinq/total*100)))
+    text_output.append(str(int(vingcinqplus/total*100)))
     return(text_output)
 
 # =============================================================================
@@ -239,7 +240,7 @@ def GraphDemiCercle(winedata):
 # ajouter les données et la couleur
     label.append("")
     val.append(sum(val))
-    colors = ['gold', 'grey', 'black', 'k']
+    colors = ["#030303", '#727272','#cea450', 'k']
 
 # plot + titre
     fig = plt.figure(figsize=(8,6),dpi=100)
@@ -253,7 +254,7 @@ def GraphDemiCercle(winedata):
 
 
 
-def GraphPositionVin(df2, moy_hedo_pro, vin):
+def GraphPositionVinNote(df2, moy_hedo_pro, vin):
 # Graph du vin par rapport aux autres
     plt.clf() #Clear previous graphs in memory
     custom_params = {"axes.spines.right": False, "axes.spines.top": False}
@@ -278,6 +279,43 @@ def GraphPositionVin(df2, moy_hedo_pro, vin):
     fig2.figure.suptitle('Votre vin par rapport aux autres !', fontfamily = "Arial Rounded MT Bold")
     fig2.get_yaxis().set_visible(False)
     plt.savefig('p.png', format='png', transparent=True, dpi=100)
+    return()
+
+# =============================================================================
+
+
+
+def GraphPositionVinScore(df2, moy_hedo_pro, vin):
+# Graph du vin par rapport aux autres
+    # Graph du vin par rapport aux autres
+    plt.clf() #Clear previous graphs in memory
+    custom_params = {"axes.spines.right": False, "axes.spines.top": False}
+    set(style="ticks", rc=custom_params)
+        # Mise en forme des données
+
+    rdfconso = df2['q2'].reset_index()
+    rdfpro = moy_hedo_pro['q1'].reset_index()
+        
+        # Faire le plot + ligne du vin
+    meanq1 = rdfpro['q1'].loc[rdfpro['numvin'] == vin]
+    meanq2 = rdfconso['q2'].loc[rdfconso['numvin'] == vin]
+        
+        # Lignes insiquant la position du vin
+    plt.xlim(xmax = 10, xmin = 0)
+    plt.axvline(float(meanq1), 0,0.95, color = 'gold',ls = '--')
+    plt.text(float((meanq2+meanq1)/2)-0.6, 0.5,"Votre vin", fontfamily = "Arial Rounded MT Bold")
+    # plt.axvline(float(meanq2), 0,0.95, color = 'black', ls = '--')
+    plt.xlabel("Score moyen du crémant")
+    plt.ylabel("Quantité de crémants (%)")
+        # Faire les deux plots + titre et enlever l'axe y
+    fig2 = kdeplot(rdfpro['q1'], shade=True, bw_method=0.5, color="gold")
+    # fig2 = kdeplot(rdfconso['q2'], shade=True, bw_method=0.5, color="black")
+    fig2.figure.suptitle('Votre vin par rapport aux autres !', fontfamily = "Arial Rounded MT Bold")
+    fig2.get_yaxis().set_visible(True)
+    plt.yticks(fig2.get_yticks(), np.around(fig2.get_yticks() * 100,0))
+
+    # plt.yticks([])
+    plt.savefig('p.png', format='png', transparent=False, dpi=200)
     return()
 
 # =============================================================================
@@ -360,19 +398,22 @@ def RadarplotVin(moy_hedo_pro, vin):
 
 # =============================================================================
 
-def CalculScore(df2 ,dp2, pnnmoy, vin):
+def CalculScore(df2 ,dp2, pnnmoy, vin, i):
     # Calcul score :
     dp2 = dp2.reset_index()
     dp2temp = dp2.loc[dp2["numvin"] == vin]
-
+    print(vin)
+    print(i)
+    print(dp2temp)
     #SENSORIEL PRO 
     oeil = 0.15*dp2temp['q2'] + 0.325 * dp2temp['q5'] + 0.15*dp2temp['q3'] + 0.325 *dp2temp['q4'] + 0.15*dp2temp['q6']
     bouche = 0.2*dp2temp['q10'] + 0.4*dp2temp['q11'] + 0.4*dp2temp['q12']
     nez = 0.2*dp2temp['q7'] + 0.4*dp2temp['q9'] + 0.4*dp2temp['q8']
     ensemble = dp2temp['q13']
-
     SENSO = (0.1 * oeil + 0.3* bouche +nez *0.3 + ensemble *0.3)/6
-
+    print("Senso: ")
+    print(SENSO)
+    print(SENSO[i])
     # ESTHETIQUE CONSO
     pnntemp = pnnmoy.loc[pnnmoy["numvin"] == vin]
 
@@ -382,34 +423,136 @@ def CalculScore(df2 ,dp2, pnnmoy, vin):
     etiqcontreetiq = 0.3*pnntemp['q7'] + 0.15*pnntemp['q6'] + 0.2*pnntemp['q8'] + 0.2*pnntemp['q9'] +0.15*pnntemp['q10']
 
     ESTHETIQUE = 0.2 * contenant + 0.1*coiffecol + 0.4 * ensemblebout + 0.3 * etiqcontreetiq
-
+    print("Esthetique : ")
+    print(ESTHETIQUE[i])
     # NOTE HEDO
     df2temp = df2.reset_index()
     df2temp = df2temp.loc[df2temp["numvin"] == vin]
 
     HEDO = (1/3 * dp2temp['q1'] + 1/3 * df2temp['q1'] + 1/3 * df2temp['q2'])/10
-
+    print("Hedo : ")
+    print(HEDO[i])
     # NOTE FINALE
 
     SCORE = 1/3 * SENSO + 1/3 * ESTHETIQUE + 1/3 * HEDO
     
+
+    # On crée le graph
+    pie = [SENSO[i],ESTHETIQUE[i],HEDO[i]]
+    color = ['#727272', '#545454', '#343434']
+    # plt.pie(pie, labels = ['Sensoriel (évaluation pro)', 'Esthétique (évaluation conso)', 'Note hédonique'],colors = color, normalize = True, autopct = lambda pie: str(round(pie, 1)) + '%',textprops={'color':"w"}, pctdistance=0.75)
+
+    _, _, autotexts = plt.pie(pie, labels = ['Sensoriel \n(évaluation pro)', 'Esthétique \n(évaluation conso)', 'Note hédonique'],colors = color, normalize = True, autopct = lambda pie: str(round(pie, 1)) + '%', pctdistance=0.78)
+    for autotext in autotexts:
+        autotext.set_color('white')
+
+    hole = plt.Circle((0, 0), 0.50, facecolor='white')
+    plt.gcf().gca().add_artist(hole)
+    
+    plt.savefig('s.png', format='png', transparent=True, dpi=400)
     return SCORE
 
 # =============================================================================
 # Modifier pdf dans Python
 
 
-def CreaPDF(vin, text_per_pdf,filedir):
+def CreaPDF(vin,filedir,text_output,df2,dp2):
     former_dir = getcwd()
     chdir(filedir)
-    doc = fitz.open()
-    page = doc.new_page()
+    doc = fitz.open("D:/Documents/boti4881/Downloads/Template3.pdf")
+    # page = doc.new_page()
+    
+    df2temp = df2.reset_index()
+    df2temp = df2temp.loc[df2temp["numvin"] == vin]
+    dp2temp = dp2.reset_index()
+    dp2temp = dp2temp.loc[dp2temp["numvin"] == vin]
+    
     for page in doc:
-        page.clean_contents()   
-    for text in enumerate(text_per_pdf):
-        page.insert_textbox(fitz.Rect(0,210+float(text[0])*20,1000,250+float(text[0])*20), text[1])
-        page.insert_image(fitz.Rect(0,0,200,200), filename=str(former_dir + '\\r.png'))
-        page.insert_image(fitz.Rect(200,0,400,200), filename=str(former_dir + '\\p.png'))
-        page.insert_image(fitz.Rect(400,0,600,200), filename=str(former_dir + '\\f.png'))
+        page.clean_contents()  
+        
+    # PAGE 1
+    page = doc.load_page(0)
+    pc = page.insert_textbox(fitz.Rect(0, 70, 595, 120), "Louis Bouillot", fontname ="Rosmatika", fontfile = "D:/Documents/boti4881/Downloads/rosmatika/Rosmatika (DEMO).ttf", align = 1, fontsize = 50, color = (0.75, 0.62, 0.43))
+    pc = page.insert_textbox(fitz.Rect(0, 120, 595, 170), "Grand terroir", fontname ="Rosmatika", fontfile = "D:/Documents/boti4881/Downloads/rosmatika-font/RosmatikaRegular-BWA45.ttf", align = 1, fontsize = 50)
+    pc = page.insert_textbox(fitz.Rect(0, 170, 595, 210), "Chenôvre Hermitage", fontname ="Rosmatika", fontfile = "D:/Documents/boti4881/Downloads/rosmatika-font/RosmatikaRegular-BWA45.ttf", align = 1, fontsize = 50)
+    pc = page.insert_textbox(fitz.Rect(0, 210, 595, 250), buffer = "(" + str(vin) + ")", fontname ="Anton", fontfile = "D:/Documents/boti4881/Downloads/Anton/Anton-Regular.ttf", align = 1, fontsize = 20)
+        
+    page.insert_image(fitz.Rect(0,365,190,550), filename='r.png')
+    page.insert_image(fitz.Rect(198,365,386,550), filename='r.png')
+    page.insert_image(fitz.Rect(404,365,594,555), filename='r.png')
+
+    fontsize = 12+ np.log(max(int(text_output[5]),1)**2)
+    pc = page.insert_textbox(fitz.Rect(48, 790 + 1/fontsize * 60, 100, 830), buffer = text_output[5]  + '€', fontname ="Rosmatika", fontfile = "D:/Documents/boti4881/Downloads/rosmatika/Rosmatika (DEMO).ttf", align = 1, fontsize = fontsize)
+
+    fontsize = 12+ np.log(max(int(text_output[6]),1)**2)
+    pc = page.insert_textbox(fitz.Rect(45 + 140, 790+ 1/fontsize * 60 , 100 + 137, 830), buffer = text_output[6] + '€', fontname ="Rosmatika", fontfile = "D:/Documents/boti4881/Downloads/rosmatika/Rosmatika (DEMO).ttf", align = 1, fontsize = 12+ np.log(max(int(text_output[6]),1)**2))
+        
+    fontsize = 12+ np.log(max(int(text_output[7]),1)**2)
+    pc = page.insert_textbox(fitz.Rect(45 + 298 , 790 + 1/fontsize * 60, 100 + 280, 830), buffer = text_output[7] + '€', fontname ="Rosmatika", fontfile = "D:/Documents/boti4881/Downloads/rosmatika/Rosmatika (DEMO).ttf", align = 1, fontsize = 12+ np.log(max(int(text_output[7]),1)**2))
+
+    fontsize = 12+ np.log(max(int(text_output[8]),1)**2)
+    pc = page.insert_textbox(fitz.Rect(492, 790+ 1/fontsize * 60, 550, 830), buffer = text_output[8] + '€', fontname ="Rosmatika", fontfile ="D:/Documents/boti4881/Downloads/rosmatika/Rosmatika (DEMO).ttf", align = 1, fontsize = 12+ np.log(max(int(text_output[8]),1)**2))
+        
+    # PAGE 2
+    page = doc.load_page(1)
+    page.insert_textbox(fitz.Rect(240, 65+10, 300, 100), buffer = text_output[0], fontname ="Rosmatika", fontfile = "D:/Documents/boti4881/Downloads/rosmatika/Rosmatika (DEMO).ttf", align = 1, fontsize = 20)
+    page.insert_textbox(fitz.Rect(170, 65+55, 300, 150), buffer = text_output[1], fontname ="Rosmatika", fontfile = "D:/Documents/boti4881/Downloads/rosmatika-font/RosmatikaRegular-BWA45.ttf", align = 1, fontsize = 20)
+    page.insert_textbox(fitz.Rect(190, 65+95, 300, 250), buffer = text_output[2], fontname ="Rosmatika", fontfile = "D:/Documents/boti4881/Downloads/rosmatika-font/RosmatikaRegular-BWA45.ttf", align = 1, fontsize = 20)
+    page.insert_textbox(fitz.Rect(480, 90, 595, 110), buffer = text_output[3], fontname ="Rosmatika", fontfile = "D:/Documents/boti4881/Downloads/rosmatika-font/RosmatikaRegular-BWA45.ttf", align = 1, fontsize = 20)
+    page.insert_textbox(fitz.Rect(520, 158, 595, 190), buffer = text_output[4], fontname ="Rosmatika", fontfile = "D:/Documents/boti4881/Downloads/rosmatika-font/RosmatikaRegular-BWA45.ttf", align = 1, fontsize = 20)
+            
+    # page.insert_textbox(fitz.Rect(170, 285, 210, 340), buffer = str(round(df2temp['q2'][0],2)), fontname ="Anton", fontfile = "D:/Documents/boti4881/Downloads/Anton/Anton-Regular.ttf", align = 1, fontsize = 21.4)
+          
+    # page.insert_textbox(fitz.Rect(500, 285, 540, 340), buffer = str(round(df2temp['q1'][0],2)), fontname ="Anton", fontfile = "D:/Documents/boti4881/Downloads/Anton/Anton-Regular.ttf", align = 1, fontsize = 21.4)
+          
+
+        
+        
+    page.insert_image(fitz.Rect(-180,400,355,560), filename='f.png')
+    page.insert_image(fitz.Rect(23,400,558,560), filename='f.png')
+    page.insert_image(fitz.Rect(225,400,780,560), filename='f.png')
+
+    page.insert_image(fitz.Rect(-180,515,355,675), filename='f.png')
+    page.insert_image(fitz.Rect(23,515,558,675), filename='f.png')
+    page.insert_image(fitz.Rect(225,515,780,675), filename='f.png')
+
+    page.insert_image(fitz.Rect(-78.5,615,456.5,785), filename='f.png')
+    page.insert_image(fitz.Rect(124.5,615,659.5,785), filename='f.png')
+
+    page.insert_image(fitz.Rect(23,730,558,890), filename='f.png')
+
+    # page.insert_image(fitz.Rect(0,0, 595,842), filename = "D:/Documents/boti4881/Downloads/red.png")
+
+
+
+    # PAGE 2
+    page = doc.load_page(2)
+
+    fontsize = 12+ np.log(max(int(text_output[5]),1)**2)
+    page.insert_textbox(fitz.Rect(40, 135 + 1/fontsize * 60, 100, 200), buffer = text_output[5]  + '€', fontname ="Rosmatika", fontfile = "D:/Documents/boti4881/Downloads/rosmatika/Rosmatika (DEMO).ttf", align = 1, fontsize = fontsize)
+
+    fontsize = 12+ np.log(max(int(text_output[6]),1)**2)
+    page.insert_textbox(fitz.Rect(40 + 135, 135+ 1/fontsize * 60 , 100 + 137, 200), buffer = text_output[6] + '€', fontname ="Rosmatika", fontfile = "D:/Documents/boti4881/Downloads/rosmatika/Rosmatika (DEMO).ttf", align = 1, fontsize = 12+ np.log(max(int(text_output[6]),1)**2))
+        
+    fontsize = 12+ np.log(max(int(text_output[7]),1)**2)
+    page.insert_textbox(fitz.Rect(40 + 298 , 135 + 1/fontsize * 60, 100 + 280, 200), buffer = text_output[7] + '€', fontname ="Rosmatika", fontfile = "D:/Documents/boti4881/Downloads/rosmatika/Rosmatika (DEMO).ttf", align = 1, fontsize = 12+ np.log(max(int(text_output[7]),1)**2))
+
+    fontsize = 12+ np.log(max(int(text_output[8]),1)**2)
+    page.insert_textbox(fitz.Rect(485, 135+ 1/fontsize * 60, 550, 200), buffer = text_output[8] + '€', fontname ="Rosmatika", fontfile ="D:/Documents/boti4881/Downloads/rosmatika/Rosmatika (DEMO).ttf", align = 1, fontsize = 12+ np.log(max(int(text_output[8]),1)**2))
+     
+
+    page.insert_textbox(fitz.Rect(240, 165+70, 300, 300), buffer = text_output[0], fontname ="Rosmatika", fontfile = "D:/Documents/boti4881/Downloads/rosmatika/Rosmatika (DEMO).ttf", align = 1, fontsize = 20)
+    page.insert_textbox(fitz.Rect(170, 165+115, 300, 350), buffer = text_output[1], fontname ="Rosmatika", fontfile = "D:/Documents/boti4881/Downloads/rosmatika-font/RosmatikaRegular-BWA45.ttf", align = 1, fontsize = 20)
+    page.insert_textbox(fitz.Rect(190, 165+155, 300, 350), buffer = text_output[2], fontname ="Rosmatika", fontfile = "D:/Documents/boti4881/Downloads/rosmatika-font/RosmatikaRegular-BWA45.ttf", align = 1, fontsize = 20)
+    page.insert_textbox(fitz.Rect(480, 190+60, 595, 300), buffer = text_output[3], fontname ="Rosmatika", fontfile = "D:/Documents/boti4881/Downloads/rosmatika-font/RosmatikaRegular-BWA45.ttf", align = 1, fontsize = 20)
+    page.insert_textbox(fitz.Rect(520, 318, 595, 400), buffer = text_output[4], fontname ="Rosmatika", fontfile = "D:/Documents/boti4881/Downloads/rosmatika-font/RosmatikaRegular-BWA45.ttf", align = 1, fontsize = 20)
+       
+
+    page.insert_image(fitz.Rect(-150,450,600,700), filename='p.png')
+
+    page = doc.load_page(3)
+    page.insert_image(fitz.Rect(-70,20,700,420), filename='s.png')
+    page.insert_image(fitz.Rect(-70,470,600,740), filename='p.png')
+
     doc.save("Vin" + str(vin) +".pdf")
     doc.close()
