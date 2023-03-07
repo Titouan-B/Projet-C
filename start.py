@@ -1,16 +1,7 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Wed Dec  7 15:13:05 2022
-
-@author: boti4881
-"""
-
-# Import des modules
-import sys, os
-from PyQt6.QtWidgets import *
-from PyQt6.QtCore import *
-from PyQt6.QtCore import *
-from PyQt6.QtCore import pyqtSignal as Signal, pyqtSlot as Slot
+import sys, os, fitz
+from PyQt5.QtWidgets import *
+from PyQt5.QtCore import *
+from PyQt5.QtCore import pyqtSignal as Signal, pyqtSlot as Slot
 from packages import func #func est un module à part contenant les fonctions de 
 # stats et pour importer les données
 
@@ -26,6 +17,9 @@ class Worker(QObject):
     @Slot(int)
     # Fonction principale
     def do_work(self, n):
+        currdir = os.path.abspath(__file__)
+        currdir = currdir[:-8]
+        
         global filedir
         os.chdir(filedir)
         i=0
@@ -34,25 +28,36 @@ class Worker(QObject):
         # Pour chaque vin dans la liste, on crée les images/stats nécessaires 
         #  à mettre dans la fiche
         for vin in enumerate(pnnmoy['numvin'].tolist()):
+            
+            doc = fitz.open(currdir + "Template.pdf")
             winedata = pnntransformed.loc[pnntransformed["numvin"] == vin[1]]
             # Radar plot
-            RPV = func.RadarplotVin(pnnmoy, vin[1])
+            for j in range(3):  
+                RPV = func.RadarplotVin(dp,dp2, vin[1],j)
+                
             # Graphique avec les positions des vins
+
             GPVS = func.GraphPositionVinScore(df2, moy_hedo_pro, vin[1])
             GPVN = func.GraphPositionVinNote(df2, moy_hedo_pro, vin[1])
+             
             # Graph en demi cercle
             GDC = func.GraphDemiCercle(winedata)
+
+             
             # Calcul Score
             CS = func.CalculScore(df2 ,dp2, pnnmoy, vin[1],i)
-            i+=1
+
+             
             # Tout le texte, donc pourcentage prix, tranches d'achats...
             text_output = []
             text_output = func.ConsoPourcentage(df3_count, vin[1], text_output)
             text_output += func.TranchePrix(df4transformed,vin[1],text_output)
             text_output += [str(chiffreannee)]
+
             # Fonction qui crée le pdf
             
-            func.CreaPDF(vin[1],filedir,text_output,df2,dp2)
+            func.CreaPDF(vin[1], filedir, currdir, text_output, df2, dp2, i, doc)
+            i+=1
             self.progress.emit(int(vin[0]+1))
         else :
             self.completed.emit(int(vin[0]+1))
@@ -160,15 +165,12 @@ class MainWindow(QMainWindow):
     def update(self, value):
         '''
         Met a jour le chiffre de l'année des éminents avec le slider'
-
         Parameters
         ----------
         value : str, année des éminents en sortie du slider
-
         Returns
         -------
         None.
-
         '''
         global chiffreannee
         chiffreannee = value
@@ -179,11 +181,9 @@ class MainWindow(QMainWindow):
         '''
         Démarre le mutlithreading du worker, désactive le bouton pour ça.
         Renvoie des valeurs pour update la barre de chargement
-
         Returns
         -------
         None.
-
         '''
         self.button3.setEnabled(False)
         n = int(len(pnnmoy['numvin'].tolist()))
@@ -194,15 +194,12 @@ class MainWindow(QMainWindow):
     def update_progress(self, v):
         '''
         
-
         Parameters
         ----------
         v : int, nombre de pdfs créés
-
         Returns
         -------
         None.
-
         '''
         self.prog_bar.setValue(v)
 # Fin
@@ -210,15 +207,12 @@ class MainWindow(QMainWindow):
         '''
         Est utilisée quand le programme de création de pdf est terminée
         Réactive le bouton
-
         Parameters
         ----------
         v : int, nombre de pdfs créés
-
         Returns
         -------
         None.
-
         '''
         self.prog_bar.setValue(v)
         self.button3.setEnabled(True)
@@ -228,11 +222,9 @@ class MainWindow(QMainWindow):
     def Bouton_Import(self):
         '''
         Importe les excel et montre combien sont actuellement importés
-
         Returns
         -------
         None.
-
         '''
         try :
             global annee
